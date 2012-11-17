@@ -1,0 +1,5 @@
+#!/bin/sh
+
+CURDATE=`date -u +%Y-%m-%d-%H-%M`
+mv /var_ov/lib/te923logger/heimatstation.db /var_ov/lib/te923logger/heimatstation.$CURDATE.db && cp /var_ov/lib/te923logger/heimatstation.template.db /var_ov/lib/te923logger/heimatstation.db
+

@@ -1,0 +1,53 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import pycurl
+from pysqlite2 import dbapi2 as sqlite
+
+DB_FILE = '/var_ov/lib/te923logger/heimatstation.db'
+
+
+def checkIfNone(x):
+    if x is None:
+      return ''
+    return str(x)
+
+
+db = sqlite.connect(DB_FILE)
+cur = db.cursor()
+
+cur.execute("""
+select 
+  strftime('%d.%m.%Y',date, 'localtime') as datedate,
+  strftime('%H:%M',date, 'localtime') as datetime,
+  outertemperature,
+  outerhumidity,
+  pressure,
+  rainmmday,
+  windspeed,
+  winddirection,
+  windgustspeed,
+  uvindex,
+  rainmm10m 
+from 
+  station_current_data
+""")
+
+row = cur.fetchone()
+
+#send to openweather
+urlparams = ""
+urlparams += "lat=48.140623&long=16.130245&alt=450"
+urlparams += "&wind_dir=" + checkIfNone(row[7])
+urlparams += "&wind_speed=" + checkIfNone(row[6])
+urlparams += "&wind_gust=" + checkIfNone(row[8])
+urlparams += "&temp=" + checkIfNone(row[2])
+urlparams += "&humidity=" + checkIfNone(row[3])
+urlparams += "&pressure=" + checkIfNone(row[4])
+urlparams += "&uv=" + checkIfNone(row[9])
+
+req = pycurl.Curl()
+req.setopt(pycurl.URL, 'http://openweathermap.org/data/post')
+req.setopt(pycurl.POSTFIELDS, urlparams)
+req.setopt(pycurl.USERPWD, 'STATIONNAME:STATIONPASSWD')
+#req.setopt(pycurl.VERBOSE, True)
+req.perform()

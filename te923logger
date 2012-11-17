@@ -1,0 +1,49 @@
+#!/usr/bin/python
+import subprocess
+from pysqlite2 import dbapi2 as sqlite
+
+db = sqlite.connect('/var_ov/lib/te923logger/heimatstation.db')
+cur = db.cursor()
+
+p = subprocess.Popen(["/usr/bin/te923con","-i NULL"],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+stdout, stderr = p.communicate()
+stationvals = stdout.split(':')
+
+cur.execute('INSERT INTO station_log (sysdate, stationdate,T0,H0,T1,H1,T2,H2,T3,H3,T4,H4,T5,H5,PR0,UV0,WD0,WS0,WG0,WC0,RC0,FC,SW) VALUES('
+
+	+ 'strftime("%s","now")'
+
+	+ ',' + stationvals[0]
+	+ ',' + stationvals[1] + ',' + stationvals[2]
+	+ ',' + stationvals[3] + ',' + stationvals[4]
+	+ ',' + stationvals[5] + ',' + stationvals[6]
+	+ ',' + stationvals[7] + ',' + stationvals[8]
+	+ ',' + stationvals[9] + ',' + stationvals[10]
+	+ ',' + stationvals[11] + ',' + stationvals[12]
+	+ ',' + stationvals[13]
+	+ ',' + stationvals[14]
+	+ ',' + stationvals[17]
+	+ ',' + stationvals[18]
+	+ ',' + stationvals[19]
+	+ ',' + stationvals[20]
+	+ ',' + stationvals[21]
+	+ ',' + stationvals[15]
+	+ ',' + stationvals[16]
+	+ ')')
+db.commit()
+db.close()
+
+#0   XX	 - station date and time (unix timestamp)
+#1   T0    - temperature from internal sensor in C
+#2   H0    - humidity from internal sensor in % rel
+#3   T1..5 - temperature from external sensor 1..4 in C
+#4   H1..5 - humidity from external sensor 1...4 in % rel
+#13  PRESS - air pressure in mBar
+#14  UV    - UV index from UV sensor
+#15  FC    - station forecast, see below for more details
+#16  STORM - stormwarning; 0 - no warning, 1 - fix your dog
+#17  WD    - wind direction in n x 22.5; 0 -> north
+#18  WS    - wind speed in m/s
+#19  WG    - wind gust speed in m/s
+#20  WC    - windchill temperature in C
+#21  RC    - rain counter (maybe since station starts measurement) as value

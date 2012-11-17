@@ -1,0 +1,78 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from pysqlite2 import dbapi2 as sqlite
+import datetime
+import codecs
+
+DB_FILE = '/var_ov/lib/te923logger/heimatstation.db'
+WEATHERLINK_FILE = '/var_ov/lib/te923logger/heimatstation.current.weatherlink.html'
+
+def checkIfNone(x):
+    if x is None:
+      return '---'
+    return str(x)
+
+db = sqlite.connect(DB_FILE)
+cur = db.cursor()
+
+cur.execute("""
+select 
+  strftime('%d.%m.%Y',date, 'localtime') as datedate,
+  strftime('%H:%M',date, 'localtime') as datetime,
+  outertemperature,
+  outerhumidity,
+  pressure,
+  rainmmday,
+  windspeed,
+  winddirection,
+  windgustspeed,
+  uvindex,
+  rainmm10m 
+from 
+  station_current_data
+""")
+
+row = cur.fetchone()
+
+now = datetime.datetime.now()
+
+lines = [
+  "AWEKAS_Template_start<br>\r\n",
+  checkIfNone(row[2]) + "<br>\r\n", # outertemperature
+  checkIfNone(row[3]) + "<br>\r\n", # outerhumidity
+  checkIfNone(row[4]) + "<br>\r\n", # pressure
+  "---<br>\r\n", # checkIfNone(row[5]) + "<br>\r\n", # rainmmday
+  checkIfNone(row[6]) + "<br>\r\n", # windspeed
+  checkIfNone(row[7]) + "<br>\r\n", # winddirection
+  now.strftime('%H:%M') + "<br>\r\n",
+#  checkIfNone(row[1]) + "<br>\r\n", # datetime
+  now.strftime('%d.%m.%Y') + "<br>\r\n",
+#  checkIfNone(row[0]) + "<br>\r\n", # datedate
+  "---<br>\r\n",
+  "-<br>\r\n",
+  "-<br>\r\n",
+  "-<br>\r\n",
+  "-<br>\r\n",
+  "-<br>\r\n",
+  "-<br>\r\n",
+  "-<br>\r\n",
+  checkIfNone(row[8]) + "<br>\r\n", # windgustspeed
+  "---<br>\r\n",
+  checkIfNone(row[9]) + "<br>\r\n", # uvindex
+  "---<br>\r\n", # funkt noch nicht ganz checkIfNone(row[10]) + "<br>\r\n", # rainmm10m
+  "---<br>\r\n",
+  u"°C<br>\r\n",
+  u"%<br>\r\n",
+  "m/s<br>\r\n",
+  "hPa<br>\r\n",
+  "mm<br>\r\n",
+  u"W/m²<br>\r\n",
+  "mm/hr<br>\r\n",
+  "index<br>\r\n",
+  "Template_V1.5<br>\r\n"
+]
+
+text_file = codecs.open(WEATHERLINK_FILE, "w","utf-8")
+#text_file = open(WEATHERLINK_FILE, "w")
+text_file.writelines(lines)
+text_file.close()
